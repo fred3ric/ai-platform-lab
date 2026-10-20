@@ -1,0 +1,8 @@
+# Argo CD synchronise ce dossier pour le profil laptop.
+# Les couches suivantes (gateway, observabilité, sécurité) s'ajoutent ici, une à la fois,
+# pour rester dans le budget de RAM (voir ROADMAP.md).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+  - resourcequota.yaml

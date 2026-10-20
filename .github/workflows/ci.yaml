@@ -1,0 +1,51 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-kubectl@v4
+      - name: Installer kubeconform
+        run: |
+          curl -fsSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+            | sudo tar xz -C /usr/local/bin kubeconform
+      - name: Validation statique
+        run: make validate
+
+  # Démarre la plateforme sur une machine vierge (le runner GitHub) :
+  # c'est la preuve que le repo est portable.
+  e2e:
+    runs-on: ubuntu-latest
+    needs: validate
+    # Argo CD doit pouvoir lire le repo : réservé aux pushs sur un repo public.
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: helm/kind-action@v1
+        with:
+          install_only: true
+      - name: Démarrer la plateforme (profil laptop)
+        env:
+          SKIP_PREFLIGHT: "1"
+          REPO_URL: https://github.com/${{ github.repository }}.git
+          GITOPS_REVISION: ${{ github.sha }}
+        run: make up PROFILE=laptop
+      - name: Vérifier la synchronisation GitOps
+        run: |
+          kubectl --context kind-ai-platform-lab -n argocd wait application/root \
+            --for=jsonpath='{.status.sync.status}'=Synced --timeout=300s
+          kubectl --context kind-ai-platform-lab -n team-demo get resourcequota team-quota
+      - name: Diagnostic en cas d'échec
+        if: failure()
+        run: |
+          kubectl --context kind-ai-platform-lab get pods -A || true
+          kubectl --context kind-ai-platform-lab -n argocd get application root -o yaml || true

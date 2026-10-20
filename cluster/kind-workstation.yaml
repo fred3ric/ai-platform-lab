@@ -1,0 +1,12 @@
+# Cluster kind du profil workstation : un plan de contrôle et deux workers,
+# pour éprouver le scheduling, les quotas et le failover entre nœuds.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 8080
+        protocol: TCP
+  - role: worker
+  - role: worker

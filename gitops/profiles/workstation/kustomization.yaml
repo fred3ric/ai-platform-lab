@@ -1,0 +1,7 @@
+# Argo CD synchronise ce dossier pour le profil workstation.
+# Même structure que le profil laptop, avec des quotas plus larges et plus de couches activées.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+  - resourcequota.yaml

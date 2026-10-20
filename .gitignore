@@ -1,0 +1,12 @@
+# Configuration propre à la machine
+profiles/local.env
+
+# Secrets
+*.key
+*.pem
+.env
+secrets/
+
+# Divers
+.DS_Store
+*.swp
